@@ -311,36 +311,39 @@ class ENV(object):
 
     @staticmethod
     def get_build_cuda_cflags(build_pkg: bool = False):
+        common_cflags = [
+            "-O3",
+            "-std=c++17",
+            "-U__CUDA_NO_HALF_OPERATORS__",
+            "-U__CUDA_NO_HALF_CONVERSIONS__",
+            "-U__CUDA_NO_HALF2_OPERATORS__",
+            "-U__CUDA_NO_BFLOAT16_CONVERSIONS__",
+            "--expt-relaxed-constexpr",
+            "--expt-extended-lambda",
+            "--use_fast_math",
+            "--ptxas-options=-v",
+            "--ptxas-options=-O3",
+        ]
         device_name = ENV.get_device_name()
-        extra_cuda_cflags = []
-        extra_cuda_cflags.append("-O3")
-        extra_cuda_cflags.append("-std=c++17")
-        extra_cuda_cflags.append("-U__CUDA_NO_HALF_OPERATORS__")
-        extra_cuda_cflags.append("-U__CUDA_NO_HALF_CONVERSIONS__")
-        extra_cuda_cflags.append("-U__CUDA_NO_HALF2_OPERATORS__")
-        extra_cuda_cflags.append("-U__CUDA_NO_BFLOAT16_CONVERSIONS__")
-        extra_cuda_cflags.append("--expt-relaxed-constexpr")
-        extra_cuda_cflags.append("--expt-extended-lambda")
-        extra_cuda_cflags.append("--use_fast_math")
-        extra_cuda_cflags.append(
-            "-diag-suppress 177" if not build_pkg else "--ptxas-options=-v"
-        )
-        extra_cuda_cflags.append(
-            "-Xptxas -v" if not build_pkg else "--ptxas-options=-O3"
-        )
-        extra_cuda_cflags.append(
-            "-DBUILD_FFPA_ATTN_MMA_L20" if "L20" in device_name else ""
-        )
-        extra_cuda_cflags.append(
-            "-DBUILD_FFPA_ATTN_MMA_4090" if "4090" in device_name else ""
-        )
-        extra_cuda_cflags.append(
-            "-DBUILD_FFPA_ATTN_MMA_3080" if "3080" in device_name else ""
-        )
-        extra_cuda_cflags.extend(ENV.env_cuda_cflags())
-        extra_cuda_cflags.append(f"-I {ENV.project_dir()}/include")
-        extra_cuda_cflags.append(f"-I {ENV.project_dir()}/csrc/cuffpa")
-        return extra_cuda_cflags
+        if device_name:
+            # 替换设备名称中的空格为下划线，以避免编译器参数问题
+            safe_device_name = device_name.replace(" ", "_")
+            common_cflags.append(f"-DBUILD_FFPA_ATTN_MMA_{safe_device_name}")
+
+        extra_env_cflags = ENV.env_cuda_cflags()
+
+        extra_include_cflags = []
+        if build_pkg:
+            extra_include_cflags.extend([
+                f"-I {ENV.project_dir()}/include",
+                f"-I {ENV.project_dir()}/csrc/cuffpa",
+            ])
+        else:
+            extra_include_cflags.extend([
+                f"-I {ENV.project_dir()}/include",
+                f"-I {ENV.project_dir()}/csrc",
+            ])
+        return [flag for flag in common_cflags + extra_env_cflags + extra_include_cflags if flag]
 
     @staticmethod
     def get_build_cflags():

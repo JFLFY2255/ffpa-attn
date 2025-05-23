@@ -276,7 +276,7 @@ void launch_ffpa_mma_L1_template(torch::Tensor Q,
   // Split-Q(FA-2) Algo, Tile MMA across Q and keep KV access for all MMAs.
   constexpr int kMmaTileSeqLenQ   = getConfigMmaTileSeqLenQP<kHeadDim>();
   constexpr int kMmaTileSeqLenK   = 1;
-  constexpr int kMmaTileSeqLenP   = getConfigMmaTileSeqLenQP<kHeadDim>();
+  constexpr int kMmaTileSeqLenP   = kMmaTileSeqLenQ;
   constexpr int kMmaTileHeadDimV  = 1;
   constexpr int kWarpTileSeqLenQ  = 1;
   constexpr int kWarpTileSeqLenK  = getConfigWarpTileSeqLenK<kHeadDim>();
@@ -530,18 +530,9 @@ TEMPLATE_FUNC<<<grid, block, kQKVSmemMaxSize>>>(            \
   {                                   \
     switch (d)                        \
     {                                 \
+      LAUNCHER(128,  (S));            \
       LAUNCHER(256,  (S));            \
-      LAUNCHER(320,  (S));            \
-      LAUNCHER(384,  (S));            \
-      LAUNCHER(448,  (S));            \
       LAUNCHER(512,  (S));            \
-      LAUNCHER(576,  (S));            \
-      LAUNCHER(640,  (S));            \
-      LAUNCHER(704,  (S));            \
-      LAUNCHER(768,  (S));            \
-      LAUNCHER(832,  (S));            \
-      LAUNCHER(896,  (S));            \
-      LAUNCHER(960,  (S));            \
       LAUNCHER(1024, (S));            \
     default:                          \
       throw std::runtime_error(       \

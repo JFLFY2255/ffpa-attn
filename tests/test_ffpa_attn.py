@@ -615,9 +615,9 @@ def check_all_close(
 
 
 Bs = [1] if not args.B else [args.B]
-Hs = [48] if not args.H else [args.H]
-Ns = [8192] if not args.N else [args.N]
-Ds = list(range(320, args.MAX_D + 64, 64)) if not args.D else [args.D]
+Hs = [32] if not args.H else [args.H]
+Ns = [4096, 8192] if not args.N else [args.N]
+Ds = [128, 256, 512, 1024]
 # batch_size, n_head, seq_len, head_dim (B,H,N,D)
 BHNDs = [(B, H, N, D) for B in Bs for H in Hs for N in Ns for D in Ds]
 # max headdim supported for different methods. skip if D > max_D.
